@@ -1,0 +1,93 @@
+Two control strategies were considered, PID-control and an observer-based controller using LQG.
+
+\subsection{PID-control}
+The PID controller continuously reads the current output signal $\theta_b(t)$ and compares it to the reference signal $r(t)$ to calculate the current error $e(t) = r(t) - \theta_b(t)$. The control signal $u(t)$ is then decided according to
+
+\begin{equation}\label{eq:PIDcont}
+    u(t) = K_P e(t) + K_I \int_0^t e(\tau) \ d\tau + K_D \frac{d}{dt}e(t),
+\end{equation}
+
+\noindent
+where the control parameters $K_P$, $K_I$ and $K_D$ are predetermined. Since the objective is to balance a pendulum, i.e., make $\theta_b=0$. The reference will therefore be set to $r=0$. Since the controller has to be discretized in the implementation the integral is replaced by a sum and the derivative by a difference quotient. If the output signal is read at time intervals of $\Delta t$ we get
+
+\begin{equation}\label{eq:PIDdisc}
+    \begin{gathered}
+        u(t) = K_Pe(t) + K_I \sum_{k=0}^N [e(k\Delta t)\Delta t] + K_D \frac{e(t) - e(t-\Delta t)}{\Delta t}, \\
+        t = N\Delta t,
+    \end{gathered}
+\end{equation}
+
+\noindent
+for the number of samples $N$. The sampling time $\Delta t$ can be baked into the parameters $K_I$ and $K_D$ leading to fewer calculations in the code implementation. For ease of reading we let 
+
+\begin{equation}
+    \begin{gathered}
+        I(t) = \sum_{k=0}^N [e(k\Delta t)\Delta t], \\
+        D(t) = \frac{e(t) - e(t-\Delta t)}{\Delta t}, \\
+        t = N\Delta t.
+    \end{gathered}
+\end{equation}
+
+\subsection{Additions to the PID controller}
+The first addition is adjusting the reference signal based on the current error. If the reference is moved further away from the current output the error will be larger and the controller will have a stronger response. For an angle increment of $\Delta\theta$ the updated reference angle $r(t+\Delta t)$ will be
+
+\begin{equation}\label{eq:ref-adjustment}
+    r(t+\Delta t) =
+    \begin{cases}
+        r(t) + \Delta\theta, \ \ \ e(t) > 0. \\
+        r(t) - \Delta\theta, \ \ \ e(t) < 0.
+    \end{cases}
+\end{equation}
+
+\noindent
+This will have the most significant impact on the integral part of the controller. The increment value should be relatively small, especially with a quick sample time, otherwise the controller may not be able to catch up. This can be beneficial if you want especially the integral part to grow quickly. We also introduce an integral saturation $I_{\text{max}}$, making the sum $I(t)$ capped to $\pm I_{\text{max}}$.
+\\\\
+Another addition to the PID controller was motor feedback. This was achieved by having the control signal feedback into itself. With a discretized controller this becomes quite simple by introducing a fourth control parameter, $K_C$, and adding the term $K_Cu(t-\Delta t)$ to equation \eqref{eq:PIDdisc}, giving
+
+\begin{equation}\label{eq:PIDCdisc}
+    u(t) = K_P e(t) + K_I I(t) + K_D D(t) + K_C u(t-\Delta t).
+\end{equation}
+
+\subsection{LQG control}
+First, we introduce independent disturbance and noise processes $\mathbf{w}_k$ and $\mathbf{v
+}_k$ into the discrete-time system from \eqref{eq:ss-disc} to get
+
+\begin{equation}
+    \begin{gathered}
+        \mathbf{x}_{k+1} = A_d\mathbf{x}_k + B_du_k + \mathbf{w}_k, \\
+        \mathbf{y}_k = C\mathbf{x}_k + \mathbf{v}_k.
+    \end{gathered}
+\end{equation}
+
+\noindent
+Let both processes be white Gaussian noise with covariance matrices $V$ and $W$ respectively. By introducing a Kalman filter and state feedback we form the control equations
+
+\begin{equation}\label{eq:LQG}
+    \begin{gathered}
+        \hat{\mathbf{x}}_{k+1} = A_d\hat{\mathbf{x}}_k + B_du_k + L(\mathbf{y}_k - C\hat{\mathbf{x}}_k),\\
+        u_k = K\hat{\mathbf{x}}_k,
+    \end{gathered}
+\end{equation}
+
+\noindent
+where $\hat{\mathbf{x}}_k$ is the estimated state vector. In order to use equation \eqref{eq:LQG}, both matrices $K$ and $L$ need to be determined. They were determined by solving the linear-quadratic-Gaussian (LQG) optimal control problem. The feedback gain $K$ is chosen such that it minimizes the cost function
+
+\begin{equation}\label{eq:LQG-cost}
+    J(u) = \sum_{k=1}^\infty \mathbf{x}_k^T Q \mathbf{x}_k + u_k^T R u_k,
+\end{equation}
+
+\noindent
+for some weight matrices $Q$ and $R$. Both the feedback gain $K$ and the Kalman gain $L$ can be obtained by solving their respective algebraic Riccati equations. This was done in Matlab using the commands \texttt{dlqr} and \texttt{dlqe}, which determines the $K$ and $L$ matrices respectively. For \texttt{dlqr}, the weight matrices had to be chosen, which was done by experimenting with different penalties. For \texttt{dlqe}, the covariance matrix for the measurement noise could be estimated using measured data. Estimating the covariance matrix for the noise affecting the states is difficult, and therefore an identity matrix is used instead.
+
+\subsection{Motor limitations}
+Most of the components used were off-the-shelf components, that were available at the university. This was a limiting factor, especially in terms of motors. A weak motor that provides low torque, puts a restriction on the maximum recovery angle. By analyzing the system statically at some tilt angle $\alpha$, we can calculate the motor torque necessary to cancel out the torque $T_O$ in the pivot point due to the gravitational force on the system. The torque $T_O$ can be calculated as
+
+\begin{equation}\label{eq:tau}
+    T_O = (m_b^*+m_w)gl \sin \alpha,
+\end{equation}
+
+\noindent
+where $m_b^*$ is the mass of the pendulum body and the motor being considered. This equation was used to estimate motor requirements depending on the mass of the motor and desired recovery angles. The torque $T_O$ can be seen as the bare minimum to recover from $\alpha$. In practice, much higher torque is required if the pendulum is to also accelerate towards the equilibrium. Note also that the pendulum will not be still when at this angle $\alpha$. It will have fallen there and thus have a non-zero angular velocity, requiring an even higher torque.
+
+\subsection{Sampling limitations}
+Apart from torque generation in the motors, the sampling time is also an important factor. In these types of unstable (open loop) systems a quick sampling rate is of critical importance in order to recover from disturbances before it is too late. Although a fast sampling rate is desired, it is limited by the hardware. The most limiting factor for the sampling time was the IMU, which outputs data at 100 Hz\cite{IMU-datasheet} i.e. a sample time of 10 ms.

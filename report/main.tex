@@ -1,0 +1,63 @@
+\documentclass[final]{LTHtwocol}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx, xcolor}
+\usepackage{dsfont}
+\usepackage{float}
+\usepackage[font=footnotesize]{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[export]{adjustbox}
+\usepackage{epstopdf}
+\usepackage{gensymb}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+\hypersetup{
+    colorlinks,
+    allcolors={blue!40!black}
+}
+\addbibresource{refs.bib}
+
+\begin{document}
+\begin{frontmatter}
+\title{Self-balancing cube} 
+\author[daniel]{Daniel Holm}
+\author[rasmus]{Rasmus Kalvenes}
+\author[jonathan]{Jonathan Vesterlund}
+\author[gustaf]{Gustaf Waldén}
+
+\email[daniel]{da5838ho-s@student.lu.se}
+\email[rasmus]{ra0820ka-s@student.lu.se}
+\email[jonathan]{jo2583ve-s@student.lu.se}
+\email[gustaf]{gu6615wa-s@student.lu.se}
+
+\advisor[olle]{Olle Kjellqvist}
+
+\begin{abstract}
+    The aim of this project was to make a cube balance on an edge, or even a corner if time allows it. This would be done with reaction wheels inside the structure. Besides this, the project also focused on working from a system design perspective, including 3D-printing and selecting electrical components. Using a PID controller with some additions, the group successfully balanced a single axis variant of the problem. A functioning LQG controller was also implemented in simulations of the problem. The learning experience was great. The most significant factors for achieving balance were sampling time, motor strength and pendulum length. A cube structure was created, but could not be made to balance due to time constraints and the factors mentioned.
+\end{abstract}
+
+\end{frontmatter}
+
+\section{Introduction}
+\input{sec/Introduction}\label{sec:intro}
+
+\section{Physical setups}
+\input{sec/SystemSetup}\label{sec:setup}
+
+\section{System dynamics}
+\input{sec/Dynamics}\label{sec:dynamics}
+
+\section{Controlling the process}
+\input{sec/Control}\label{sec:control}
+
+\section{Results}
+\input{sec/Results}\label{sec:results}
+
+\section{Discussion}
+\input{sec/Discussion}\label{sec:discussion}
+
+\printbibliography
+
+\end{document}

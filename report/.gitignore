@@ -1,0 +1,5 @@
+# We want to have these particular files in the repo
+
+!LTHtwocol.cls
+!*.eps
+!main.pdf
