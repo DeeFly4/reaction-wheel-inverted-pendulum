@@ -49,8 +49,8 @@ float angleOffset;
 /* Create motor shield object with default I2C address */
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
-/* Create motor object. Select which 'port' M1, M2, M3 or M4. In this case, M1 */ 
-Adafruit_DCMotor *motor = AFMS.getMotor(1);
+/* Create motor object. Select which 'port' M1, M2, M3 or M4. In this case, M4 */ 
+Adafruit_DCMotor *motor = AFMS.getMotor(4);
 
 /* Create IMU object with default I2C adress (default address is 0x29 or 0x28)
 									  id, address */
@@ -79,15 +79,15 @@ void setup() {
 	motor->run(FORWARD);
 	motor->run(RELEASE);
 
-	angleOffset = calibrateOffset();
-	Serial.print("angleOffset = ");
-	Serial.println(angleOffset);
+	// angleOffset = calibrateOffset();
+	// Serial.print("angleOffset = ");
+	// Serial.println(angleOffset);
 
-	printPIDGains();
+	// printPIDGains();
 
-	Serial.println("Hit enter to start controller");
-	while (Serial.available() == 0); // waits for user to hit enter
-	Serial.read();
+	// Serial.println("Hit enter to start controller");
+	// while (Serial.available() == 0); // waits for user to hit enter
+	// Serial.read();
 	Serial.flush();
 }
 
@@ -95,7 +95,7 @@ void loop() {
 	t = millis(); // get current time
 
 	/* Tunes control parameters if there is input from serial */
-	tuning();
+	// tuning();
 	
 	/* The controller acts at regular intervals */
 	if (t - prevLoop < MAIN_LOOP_MILLIS) return; // skip if not enough time has passed
